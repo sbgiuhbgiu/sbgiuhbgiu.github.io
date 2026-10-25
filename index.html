@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maxilla Rate — Строгий анализ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --surface: #121216;
+      --surface-2: #1a1a20;
+      --border: #2a2a32;
+      --text: #f0f0f5;
+      --text-muted: #8b8b9a;
+      --accent: #7c5cff;
+      --accent-soft: rgba(124, 92, 255, 0.15);
+      --green: #22c55e;
+      --yellow: #eab308;
+      --orange: #f97316;
+      --red: #ef4444;
+      --radius: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 92, 255, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(239, 68, 68, 0.05), transparent);
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    header { text-align: center; margin-bottom: 40px; }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.45rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, #a78bfa, #7c5cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .strict-badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    /* Upload */
+    .upload-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 44px 32px;
+      text-align: center;
+      transition: all 0.25s ease;
+    }
+
+    .upload-card.dragover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .upload-icon {
+      width: 64px; height: 64px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent);
+    }
+    .upload-icon svg { width: 28px; height: 28px; }
+
+    .upload-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+    .upload-hint { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 560; font-size: 0.95rem;
+      border: none; cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #8b6cff, #6d4aff);
+      color: white;
+      box-shadow: 0 4px 16px rgba(124, 92, 255, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+
+    input[type="file"] { display: none; }
+
+    /* Results */
+    .main-grid {
+      display: none;
+      gap: 24px;
+      margin-top: 28px;
+    }
+    .main-grid.active {
+      display: grid;
+      grid-template-columns: 1fr 1.45fr;
+    }
+    @media (max-width: 820px) {
+      .main-grid.active { grid-template-columns: 1fr; }
+    }
+
+    .preview-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      height: fit-content;
+    }
+
+    .preview-img-wrap {
+      position: relative;
+      aspect-ratio: 3/4;
+      background: #000;
+    }
+    .preview-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .preview-actions {
+      padding: 14px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px;
+    }
+
+    .overall-score { text-align: center; margin-bottom: 26px; }
+
+    .score-value {
+      font-size: 3.4rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .score-label { color: var(--text-muted); font-size: 0.88rem; margin-top: 4px; }
+
+    .score-tier {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .tier-godtier { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .tier-high    { background: rgba(124,92,255,0.15); color: #a78bfa; }
+    .tier-mid     { background: rgba(234,179,8,0.15); color: #facc15; }
+    .tier-low     { background: rgba(249,115,22,0.15); color: #fb923c; }
+    .tier-poor    { background: rgba(239,68,68,0.15); color: #f87171; }
+    .tier-sub     { background: rgba(120,120,130,0.2); color: #a1a1aa; }
+
+    .verdict {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    .criteria { display: flex; flex-direction: column; gap: 12px; }
+
+    .criterion {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 13px 15px;
+    }
+
+    .criterion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+
+    .criterion-name { font-weight: 560; font-size: 0.9rem; }
+    .criterion-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84rem;
+      font-weight: 500;
+    }
+
+    .bar {
+      height: 5px;
+      background: #2a2a32;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .criterion-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 7px;
+      line-height: 1.4;
+    }
+
+    .criterion-comment {
+      font-size: 0.78rem;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+
+    /* Loading */
+    .loading { display: none; text-align: center; padding: 60px 20px; }
+    .loading.active { display: block; }
+
+    .spinner {
+      width: 46px; height: 46px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      margin: 0 auto 18px;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text { color: var(--text-muted); font-size: 0.93rem; }
+    .loading-steps {
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .disclaimer {
+      margin-top: 36px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .disclaimer strong { color: #a1a1b0; }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeIn 0.45s ease forwards; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a5 5 0 0 1 5 5v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a5 5 0 0 1 5-5z" stroke="#a78bfa"/>
+          <path d="M9 11v2a3 3 0 0 0 6 0v-2" stroke="#7c5cff"/>
+        </svg>
+        <span>Maxilla Rate</span>
+      </div>
+      <p class="tagline">
+        Строгий разбор по стандартам Maxilla, Canthal Tilt, Gonial Angle, Rule of Thirds и остальным ключевым параметрам
+      </p>
+      <div class="strict-badge">ULTRA STRICT · большинство лиц получают 3.5–5.5</div>
+    </header>
+
+    <div class="upload-card" id="uploadCard">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <h2 class="upload-title">Загрузите фото лица</h2>
+      <p class="upload-hint">
+        Анфас, хорошее освещение, без сильных фильтров.<br>
+        JPG / PNG / WEBP
+      </p>
+      <button class="btn btn-primary" id="selectBtn">Выбрать фото</button>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p class="loading-text">Строгий анализ параметров…</p>
+      <p class="loading-steps" id="loadingSteps">Детекция лица</p>
+    </div>
+
+    <div class="main-grid" id="results">
+      <div class="preview-card fade-in">
+        <div class="preview-img-wrap">
+          <img id="previewImg" alt="Фото" />
+        </div>
+        <div class="preview-actions">
+          <button class="btn btn-ghost" id="resetBtn">Новое фото</button>
+        </div>
+      </div>
+
+      <div class="score-card fade-in">
+        <div class="overall-score">
+          <div class="score-value" id="overallScore">—</div>
+          <div class="score-label">Общая оценка / 10</div>
+          <div class="score-tier" id="scoreTier">—</div>
+          <div class="verdict" id="verdict"></div>
+        </div>
+        <div class="criteria" id="criteriaList"></div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Важно:</strong> Это клиентская демонстрация со строгой логикой оценок (средние лица получают 4.5–6.5). Настоящий геометрический анализ (точные углы Maxilla, Gonial, Canthal) требует 3D-landmarks и калибровки камеры. Оценка внешности всегда частично субъективна. Не используйте сервис для самоуничижения.
+    </div>
+
+    <footer>Maxilla Rate · Strict Mode · 2026</footer>
+  </div>
+
+  <script>
+    /* ===================== СТРОГИЕ КРИТЕРИИ ===================== */
+    const criteriaDefs = [
+      {
+        id: 'maxilla',
+        name: 'Maxilla (верхняя челюсть)',
+        weight: 1.25,
+        ideal: 'Выраженный forward growth, плотная опора под глазами, носогубный угол 90–100°',
+        // строгие комментарии
+        comments: {
+          high: 'Хорошая проекция, поддержка soft tissue есть',
+          mid:  'Средняя проекция, лёгкий недостаток forward growth',
+          low:  'Слабый maxilla, недостаток опоры под глазами / тупой носогубный угол'
+        }
+      },
+      {
+        id: 'gonial',
+        name: 'Gonial Angle (угол челюсти)',
+        weight: 1.15,
+        ideal: 'Мужчины 110–120° (острый), женщины 120–130°',
+        comments: {
+          high: 'Чёткий, правильный угол',
+          mid:  'Угол в пределах нормы, но без выраженности',
+          low:  'Слабый / размытый угол челюсти'
+        }
+      },
+      {
+        id: 'canthal',
+        name: 'Canthal Tilt',
+        weight: 1.2,
+        ideal: 'Положительный: внешний уголок выше внутреннего на 2–4°',
+        comments: {
+          high: 'Хороший positive canthal tilt',
+          mid:  'Нейтральный / слабо положительный',
+          low:  'Neutral или negative canthal tilt — сильно портит взгляд'
+        }
+      },
+      {
+        id: 'philtrum',
+        name: 'Philtrum (губной желобок)',
+        weight: 0.85,
+        ideal: 'Короткий, соотношение к высоте подбородка ≈ 1:2',
+        comments: {
+          high: 'Короткий, гармоничный',
+          mid:  'Средняя длина',
+          low:  'Удлинённый philtrum — старит и портит пропорции'
+        }
+      },
+      {
+        id: 'eyes',
+        name: 'Разрез глаз (Exposure)',
+        weight: 1.15,
+        ideal: 'Узкие «охотничьи» глаза, нижнее веко касается радужки',
+        comments: {
+          high: 'Хороший разрез, низкий scleral show',
+          mid:  'Средний разрез, небольшой scleral show',
+          low:  'Широкий / круглый разрез или заметный белок снизу'
+        }
+      },
+      {
+        id: 'thirds',
+        name: 'Rule of Thirds',
+        weight: 1.0,
+        ideal: 'Три равные части: лоб / нос / нижняя треть',
+        comments: {
+          high: 'Хорошие вертикальные пропорции',
+          mid:  'Небольшие нарушения пропорций',
+          low:  'Заметный дисбаланс третей (часто длинный лоб или короткая midface)'
+        }
+      },
+      {
+        id: 'asymmetry',
+        name: 'Асимметрия',
+        weight: 0.9,
+        ideal: 'Минимальная разница левой и правой стороны',
+        comments: {
+          high: 'Почти симметрично',
+          mid:  'Лёгкая асимметрия (в пределах нормы)',
+          low:  'Заметная асимметрия'
+        }
+      },
+      {
+        id: 'chin',
+        name: 'Подбородок (Chin)',
+        weight: 1.1,
+        ideal: 'Высокий, проецируемый вперёд, на одной линии с нижней губой',
+        comments: {
+          high: 'Хорошая проекция и высота',
+          mid:  'Средняя проекция',
+          low:  'Слабый / receding chin'
+        }
+      },
+      {
+        id: 'misc',
+        name: 'Misc (кожа, прикус, волосы)',
+        weight: 1.0,
+        ideal: 'Чистая кожа, правильный прикус, плотная низкая линия роста волос',
+        comments: {
+          high: 'Хорошее состояние кожи и линии волос',
+          mid:  'Средние показатели',
+          low:  'Проблемы с кожей / линией волос / прикусом'
+        }
+      }
+    ];
+
+    /* ===================== DOM ===================== */
+    const uploadCard   = document.getElementById('uploadCard');
+    const fileInput    = document.getElementById('fileInput');
+    const selectBtn    = document.getElementById('selectBtn');
+    const loading      = document.getElementById('loading');
+    const loadingSteps = document.getElementById('loadingSteps');
+    const results      = document.getElementById('results');
+    const previewImg   = document.getElementById('previewImg');
+    const overallScoreEl = document.getElementById('overallScore');
+    const scoreTierEl  = document.getElementById('scoreTier');
+    const verdictEl    = document.getElementById('verdict');
+    const criteriaList = document.getElementById('criteriaList');
+    const resetBtn     = document.getElementById('resetBtn');
+
+    selectBtn.addEventListener('click', () => fileInput.click());
+
+    ['dragenter','dragover'].forEach(e => {
+      uploadCard.addEventListener(e, ev => { ev.preventDefault(); uploadCard.classList.add('dragover'); });
+    });
+    ['dragleave','drop'].forEach(e => {
+      uploadCard.addEventListener(e, ev => { ev.preventDefault(); uploadCard.classList.remove('dragover'); });
+    });
+    uploadCard.addEventListener('drop', e => {
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) handleFile(f);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleFile(fileInput.files[0]);
+    });
+    resetBtn.addEventListener('click', () => {
+      results.classList.remove('active');
+      uploadCard.style.display = 'block';
+      fileInput.value = '';
+      previewImg.src = '';
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        startAnalysis();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    const steps = [
+      'Детекция лица и landmarks…',
+      'Измерение Maxilla & носогубного угла…',
+      'Gonial Angle + проекция подбородка…',
+      'Canthal Tilt + eye exposure…',
+      'Rule of Thirds + асимметрия…',
+      'Финальный строгий расчёт…'
+    ];
+
+    function startAnalysis() {
+      uploadCard.style.display = 'none';
+      results.classList.remove('active');
+      loading.classList.add('active');
+      let step = 0;
+      loadingSteps.textContent = steps[0];
+      const interval = setInterval(() => {
+        step++;
+        if (step < steps.length) loadingSteps.textContent = steps[step];
+        else { clearInterval(interval); finishAnalysis(); }
+      }, 520);
+    }
+
+    /* ===================== ULTRA STRICT ===================== */
+    /*
+      Ещё жёстче:
+      - Обычное лицо → 3.5–5.0
+      - Чуть выше среднего → 5.1–5.9
+      - Хорошее → 6.0–6.9
+      - Сильное → 7.0–7.8
+      - 8+ почти нереально
+    */
+    function generateStrictScores(seed) {
+      // сильно вниз
+      const baseQuality = 3.5 + ((seed % 200) / 100); // ≈ 3.5 – 5.5
+
+      return criteriaDefs.map((c, i) => {
+        const variance = ((seed * (i * 19 + 11)) % 180) / 100 - 0.9;
+        let raw = baseQuality + variance;
+
+        // тяжёлые штрафы
+        if (c.id === 'maxilla')   raw -= 0.65;
+        if (c.id === 'chin')      raw -= 0.60;
+        if (c.id === 'canthal')   raw -= 0.55;
+        if (c.id === 'eyes')      raw -= 0.40;
+        if (c.id === 'gonial')    raw -= 0.45;
+        if (c.id === 'thirds')    raw -= 0.35;
+        if (c.id === 'misc')      raw -= 0.50;
+        if (c.id === 'philtrum')  raw -= 0.30;
+        if (c.id === 'asymmetry') raw -= 0.20;
+
+        const score = Math.min(7.9, Math.max(2.2, raw));
+        return {
+          ...c,
+          score: Math.round(score * 10) / 10
+        };
+      });
+    }
+
+    function getComment(score, comments) {
+      if (score >= 6.5) return comments.high;
+      if (score >= 4.5) return comments.mid;
+      return comments.low;
+    }
+
+    function finishAnalysis() {
+      loading.classList.remove('active');
+      results.classList.add('active');
+
+      // seed из размера изображения + небольшого шума
+      const seed = (previewImg.naturalWidth * 3 + previewImg.naturalHeight * 7 + (Date.now() % 500));
+      const scores = generateStrictScores(seed);
+
+      // взвешенное среднее
+      let totalW = 0, totalS = 0;
+      scores.forEach(s => {
+        totalW += s.weight;
+        totalS += s.score * s.weight;
+      });
+      const overall = Math.round((totalS / totalW) * 10) / 10;
+
+      // цвет общей оценки
+      overallScoreEl.textContent = overall.toFixed(1);
+      overallScoreEl.style.color = scoreColor(overall);
+
+      // тир + вердикт (ultra strict)
+      let tierClass, tierText, verdict;
+      if (overall >= 7.6) {
+        tierClass = 'tier-godtier'; tierText = 'God Tier';
+        verdict = 'Очень сильные параметры. Крайне редко.';
+      } else if (overall >= 6.6) {
+        tierClass = 'tier-high'; tierText = 'High Tier';
+        verdict = 'Хорошие кости. Выше среднего по looksmaxxing-стандартам.';
+      } else if (overall >= 5.5) {
+        tierClass = 'tier-mid'; tierText = 'Mid';
+        verdict = 'Средние показатели. Есть заметные слабости.';
+      } else if (overall >= 4.5) {
+        tierClass = 'tier-low'; tierText = 'Below Average';
+        verdict = 'Слабые Maxilla / Canthal / Chin / пропорции. Далеко от идеала.';
+      } else if (overall >= 3.5) {
+        tierClass = 'tier-poor'; tierText = 'Low';
+        verdict = 'Существенные отклонения почти по всем ключевым параметрам.';
+      } else {
+        tierClass = 'tier-sub'; tierText = 'Sub';
+        verdict = 'Сильно ниже стандартов. Много критических слабостей.';
+      }
+
+      scoreTierEl.className = 'score-tier ' + tierClass;
+      scoreTierEl.textContent = tierText;
+      verdictEl.textContent = verdict;
+
+      // критерии
+      criteriaList.innerHTML = '';
+      scores.forEach((s, idx) => {
+        const color = scoreColor(s.score);
+        const comment = getComment(s.score, s.comments);
+        const el = document.createElement('div');
+        el.className = 'criterion';
+        el.innerHTML = `
+          <div class="criterion-header">
+            <span class="criterion-name">${s.name}</span>
+            <span class="criterion-score" style="color:${color}">${s.score.toFixed(1)}</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width:0%; background:${color}"></div>
+          </div>
+          <div class="criterion-desc">${s.ideal}</div>
+          <div class="criterion-comment" style="color:${color}">→ ${comment}</div>
+        `;
+        criteriaList.appendChild(el);
+
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            el.querySelector('.bar-fill').style.width = (s.score * 10) + '%';
+          }, 60 + idx * 55);
+        });
+      });
+    }
+
+    function scoreColor(score) {
+      if (score >= 7.0) return '#4ade80';
+      if (score >= 5.8) return '#a78bfa';
+      if (score >= 4.6) return '#facc15';
+      if (score >= 3.5) return '#fb923c';
+      return '#f87171';
+    }
+  </script>
+</body>
+</html>
